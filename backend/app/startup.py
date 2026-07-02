@@ -1,31 +1,27 @@
 """
-Startup data loader that runs automatically when the backend container starts.
+Startup data loader — runs automatically when the backend container starts.
 
-On first run it checks if the database is empty. If so, it downloads the
-TMDB 5000 dataset from a public GitHub mirror and loads it — making the
-project truly plug-and-play with just docker-compose up.
-
-Data source: TMDB 5000 Movie Dataset (publicly mirrored on GitHub)
-Original source: Kaggle - https://www.kaggle.com/datasets/tmdb/tmdb-movie-metadata
+On first run, downloads the TMDB 5000 dataset from a public GitHub mirror
+and also loads the bundled extra_content.csv (Hindi movies + web series).
+This makes the project fully plug-and-play with docker-compose up.
 """
 
 import os
 import ast
 import requests
 import pandas as pd
-from io import StringIO
 from sqlalchemy.orm import Session
 
 from app.database import SessionLocal, Base, engine
 from app.models import Movie
 
-# Public GitHub mirror of the TMDB 5000 dataset (no login required).
 MOVIES_URL = "https://raw.githubusercontent.com/vamshi121/TMDB-5000-Movie-Dataset/main/tmdb_5000_movies.csv"
 CREDITS_URL = "https://raw.githubusercontent.com/vamshi121/TMDB-5000-Movie-Dataset/main/tmdb_5000_credits.csv"
 
 DATA_DIR = "/app/data"
 MOVIES_CSV = os.path.join(DATA_DIR, "tmdb_5000_movies.csv")
 CREDITS_CSV = os.path.join(DATA_DIR, "tmdb_5000_credits.csv")
+EXTRA_CSV = os.path.join(DATA_DIR, "extra_content.csv")
 
 
 def parse_names(json_like: str, limit: int = None) -> str:
@@ -39,7 +35,7 @@ def parse_names(json_like: str, limit: int = None) -> str:
 
 
 def download_file(url: str, dest: str) -> bool:
-    """Downloads a file from a URL and saves it to disk. Returns True on success."""
+    """Downloads a file from a URL and saves it to disk."""
     try:
         print(f"Downloading {os.path.basename(dest)}...")
         response = requests.get(url, timeout=60)
@@ -54,8 +50,8 @@ def download_file(url: str, dest: str) -> bool:
         return False
 
 
-def load_movies_into_db(db: Session) -> int:
-    """Loads movies from the local CSV files into the database. Returns count inserted."""
+def load_tmdb_movies(db: Session) -> int:
+    """Loads movies from the TMDB Kaggle CSV files into the database."""
     movies_df = pd.read_csv(MOVIES_CSV)
     credits_df = pd.read_csv(CREDITS_CSV)
     merged = movies_df.merge(credits_df, left_on="id", right_on="movie_id", suffixes=("", "_credit"))
@@ -74,6 +70,37 @@ def load_movies_into_db(db: Session) -> int:
             release_year=str(row.get("release_date", ""))[:4],
             vote_average=float(row.get("vote_average", 0.0) or 0.0),
             poster_path="",
+            content_type="movie",
+        ))
+        inserted += 1
+
+    db.commit()
+    return inserted
+
+
+def load_extra_content(db: Session) -> int:
+    """Loads bundled Hindi movies and web series from extra_content.csv."""
+    if not os.path.exists(EXTRA_CSV):
+        print("extra_content.csv not found, skipping.")
+        return 0
+
+    df = pd.read_csv(EXTRA_CSV)
+    inserted = 0
+
+    for _, row in df.iterrows():
+        tmdb_id = int(row["id"])
+        if db.query(Movie).filter(Movie.tmdb_id == tmdb_id).first():
+            continue
+        db.add(Movie(
+            tmdb_id=tmdb_id,
+            title=row.get("title", "Untitled"),
+            overview=row.get("overview", "") or "",
+            genres=str(row.get("genres", "")) or "",
+            cast=str(row.get("cast", "")) or "",
+            release_year=str(row.get("release_year", "")) or "",
+            vote_average=float(row.get("vote_average", 0.0) or 0.0),
+            poster_path="",
+            content_type=str(row.get("content_type", "movie")),
         ))
         inserted += 1
 
@@ -83,8 +110,8 @@ def load_movies_into_db(db: Session) -> int:
 
 def auto_setup():
     """
-    Main startup function. Called once when the backend starts.
-    Skips everything if the database already has movies loaded.
+    Runs on backend startup. Skips if database already has content.
+    Downloads TMDB data if needed, then loads bundled Hindi movies and web series.
     """
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
@@ -92,25 +119,30 @@ def auto_setup():
     try:
         movie_count = db.query(Movie).count()
         if movie_count > 0:
-            print(f"Database already has {movie_count} movies. Skipping setup.")
+            print(f"Database already has {movie_count} items. Skipping setup.")
             return
 
         print("Database is empty. Starting auto-setup...")
 
-        # Download CSVs if not already present (e.g. mounted via volume).
         if not os.path.exists(MOVIES_CSV):
             if not download_file(MOVIES_URL, MOVIES_CSV):
-                print("Could not download movies CSV. Place it manually in backend/app/data/")
+                print("Could not download movies CSV.")
                 return
 
         if not os.path.exists(CREDITS_CSV):
             if not download_file(CREDITS_URL, CREDITS_CSV):
-                print("Could not download credits CSV. Place it manually in backend/app/data/")
+                print("Could not download credits CSV.")
                 return
 
-        print("Loading movies into database...")
-        inserted = load_movies_into_db(db)
-        print(f"Auto-setup complete. Loaded {inserted} movies.")
+        print("Loading TMDB movies...")
+        tmdb_count = load_tmdb_movies(db)
+        print(f"Loaded {tmdb_count} TMDB movies.")
+
+        print("Loading Hindi movies and web series...")
+        extra_count = load_extra_content(db)
+        print(f"Loaded {extra_count} extra items (Hindi movies + web series).")
+
+        print(f"Auto-setup complete. Total: {tmdb_count + extra_count} items ready.")
 
     finally:
         db.close()

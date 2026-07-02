@@ -924,3 +924,43 @@ body {
   .movie-card.full-size { flex-direction: column; max-height: unset; }
   .movie-card.full-size .poster-area { width: 100%; height: 260px; }
 }
+
+/* ── CONTENT TYPE TABS ── */
+.content-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 20px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+}
+
+.content-tab {
+  background: transparent;
+  border: 2px solid var(--border);
+  color: var(--text-secondary);
+  padding: 10px 24px;
+  border-radius: 30px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.2s;
+}
+
+.content-tab:hover {
+  border-color: var(--accent);
+  color: var(--text-primary);
+}
+
+.content-tab.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+
+.option-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
