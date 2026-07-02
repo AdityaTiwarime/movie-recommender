@@ -1,5 +1,3 @@
-"""Pydantic schemas for request validation and response shaping."""
-
 from pydantic import BaseModel
 from typing import List, Optional
 
@@ -26,7 +24,7 @@ class TitleRecommendRequest(BaseModel):
 class PreferenceRecommendRequest(BaseModel):
     genres: List[str]
     top_n: int = 10
-    content_type: Optional[str] = None  # None = all, "movie", "web_series", "hindi_movie"
+    content_type: Optional[str] = None
 
 
 class SyncResponse(BaseModel):

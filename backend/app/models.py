@@ -1,8 +1,3 @@
-"""
-ORM model for cached movie and web series data.
-content_type field distinguishes between movies, web series, and Hindi movies.
-"""
-
 from sqlalchemy import Column, Integer, String, Float, Text
 from app.database import Base
 
@@ -19,8 +14,7 @@ class Movie(Base):
     release_year = Column(String(4), default="")
     vote_average = Column(Float, default=0.0)
     poster_path = Column(String(255), default="")
-    content_type = Column(String(50), default="movie")  # movie | web_series | hindi_movie
+    content_type = Column(String(50), default="movie")
 
-    def combined_features(self) -> str:
-        """Builds a text blob for TF-IDF vectorization. Genres and cast weighted higher."""
+    def combined_features(self):
         return f"{self.overview} {self.genres} {self.genres} {self.cast} {self.cast}"
