@@ -182,8 +182,14 @@ export default function App() {
     <>
       {/* Hero Header */}
       <header className="hero">
+        <div className="hero-film-strip" />
         <h1>Find Your <span>Perfect Watch</span></h1>
         <p>Answer a few quick questions and we'll find exactly what you're in the mood for.</p>
+        <div className="hero-stats">
+          <div className="hero-stat"><strong>5000+</strong><span>Movies</span></div>
+          <div className="hero-stat"><strong>30+</strong><span>Web Series</span></div>
+          <div className="hero-stat"><strong>30+</strong><span>Hindi Films</span></div>
+        </div>
       </header>
 
       {/* Content Type Tabs */}
