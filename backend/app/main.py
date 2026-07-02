@@ -1,29 +1,37 @@
 """
 FastAPI application entrypoint.
 
-Exposes the movie recommendation API and serves as the backend container's
-main process. CORS is open to the frontend container's origin so the React
-app (running in its own container) can call this API directly.
+On startup, auto_setup() is called to check if the database needs to be
+populated. If it is empty, it automatically downloads the TMDB dataset
+and loads it — making the project fully plug-and-play with docker-compose up.
 """
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 
 from app.database import Base, engine
 from app.routers import recommend, movies
+from app.startup import auto_setup
 
-# Creates the SQLite tables on startup if they don't already exist.
-Base.metadata.create_all(bind=engine)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Runs auto_setup on startup so the database is always ready."""
+    auto_setup()
+    yield
+
 
 app = FastAPI(
     title="Movie Matching & Recommendation Service",
     description="Content-based movie recommender built for the JTP 2026 recruitment project.",
     version="1.0.0",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Open for demo purposes; restrict to frontend origin in production.
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
