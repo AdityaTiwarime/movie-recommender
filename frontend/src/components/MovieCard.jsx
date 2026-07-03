@@ -41,8 +41,6 @@ export default function MovieCard({ movie, onClick, fullSize = false }) {
           {movie.genres && <div className="card-genres">{movie.genres}</div>}
           <div style={{ display: 'flex', gap: '8px', marginTop: '4px', flexWrap: 'wrap' }}>
             {movie.release_year && <span className="card-year">{movie.release_year}</span>}
-            {movie.content_type === 'web_series' && <span style={{ fontSize: '11px', color: '#4ecdc4' }}>📺 Series</span>}
-            {movie.content_type === 'hindi_movie' && <span style={{ fontSize: '11px', color: '#ff6b6b' }}>🎭 Hindi</span>}
           </div>
         </div>
         {movie.overview && <p className="card-overview">{movie.overview}</p>}

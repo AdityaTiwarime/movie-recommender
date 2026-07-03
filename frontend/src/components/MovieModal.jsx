@@ -36,8 +36,6 @@ export default function MovieModal({ movie, onClose }) {
             {movie.release_year && <span>{movie.release_year}</span>}
             {movie.vote_average > 0 && <span className="rating">⭐ {movie.vote_average.toFixed(1)}</span>}
             {movie.genres && <span className="genres">{movie.genres}</span>}
-            {movie.content_type === 'web_series' && <span style={{color:'#4ecdc4'}}>📺 Web Series</span>}
-            {movie.content_type === 'hindi_movie' && <span style={{color:'#ff6b6b'}}>🎭 Hindi</span>}
           </div>
           {movie.overview && <p className="modal-overview">{movie.overview}</p>}
           {movie.cast && <div className="modal-cast"><h4>Cast</h4><p>{movie.cast}</p></div>}

@@ -3,11 +3,9 @@ import MovieCard from './components/MovieCard.jsx';
 import MovieModal from './components/MovieModal.jsx';
 import { recommendByPreferences } from './api.js';
 
-// Content type tabs — Movies, Web Series, Hindi Movies
+// Content type - Movies only (Hindi movies / web series dataset removed)
 const CONTENT_TABS = [
   { id: 'movie', label: '🎬 Movies', type: 'movie' },
-  { id: 'web_series', label: '📺 Web Series', type: 'web_series' },
-  { id: 'hindi_movie', label: '🎭 Hindi Movies', type: 'hindi_movie' },
 ];
 
 // All moods mapped to genres
@@ -187,23 +185,8 @@ export default function App() {
         <p>Answer a few quick questions and we'll find exactly what you're in the mood for.</p>
         <div className="hero-stats">
           <div className="hero-stat"><strong>5000+</strong><span>Movies</span></div>
-          <div className="hero-stat"><strong>30+</strong><span>Web Series</span></div>
-          <div className="hero-stat"><strong>30+</strong><span>Hindi Films</span></div>
         </div>
       </header>
-
-      {/* Content Type Tabs */}
-      <div className="content-tabs">
-        {CONTENT_TABS.map(tab => (
-          <button
-            key={tab.id}
-            className={`content-tab ${contentTab === tab.id ? 'active' : ''}`}
-            onClick={() => handleTabChange(tab.id)}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
 
       <div className="app-container">
 
