@@ -79,6 +79,36 @@ def _fetch_top_cast(tmdb_id: int, limit: int = 3) -> str:
         return ""
 
 
+def fetch_poster_path(tmdb_id: int) -> str:
+    """Looks up just the poster for one movie by tmdb id - used to backfill
+    posters on movies loaded from the Kaggle CSV, which don't come with one."""
+    if not TMDB_API_KEY:
+        return ""
+    try:
+        r = requests.get(f"{TMDB_BASE_URL}/movie/{tmdb_id}", params={"api_key": TMDB_API_KEY}, timeout=8)
+        r.raise_for_status()
+        return r.json().get("poster_path") or ""
+    except requests.RequestException:
+        return ""
+
+
+def fill_posters(movies, db):
+    """Backfills poster_path on the way out of an endpoint, only for rows
+    that don't have one yet. Lazy on purpose - fetching all 4800 posters up
+    front on first boot would take forever and burn API quota on movies
+    nobody ends up looking at."""
+    touched = False
+    for m in movies:
+        if not m.poster_path:
+            p = fetch_poster_path(m.tmdb_id)
+            if p:
+                m.poster_path = p
+                touched = True
+    if touched:
+        db.commit()
+    return movies
+
+
 def sync_movies_to_db(db: Session, pages: int = 5) -> int:
     """
     Fetches popular movies from TMDB and upserts them into the local cache.
