@@ -6,12 +6,11 @@ from app.database import SessionLocal, Base, engine
 from app.models import Movie
 
 MOVIES_URL = "https://raw.githubusercontent.com/vamshi121/TMDB-5000-Movie-Dataset/main/tmdb_5000_movies.csv"
-CREDITS_URL = "https://raw.githubusercontent.com/vamshi121/TMDB-5000-Movie-Dataset/main/tmdb_5000_credits.csv"
+CREDITS_URL = "https://raw.githubusercontent.com/andandandand/CSV-datasets/master/tmdb_5000_credits.csv"
 
 DATA_DIR = "/app/data"
 MOVIES_CSV = os.path.join(DATA_DIR, "tmdb_5000_movies.csv")
 CREDITS_CSV = os.path.join(DATA_DIR, "tmdb_5000_credits.csv")
-EXTRA_CSV = os.path.join(DATA_DIR, "extra_content.csv")
 
 
 def parse_names(s, limit=None):
@@ -63,31 +62,6 @@ def load_tmdb(db):
     return count
 
 
-def load_extra(db):
-    if not os.path.exists(EXTRA_CSV):
-        return 0
-    df = pd.read_csv(EXTRA_CSV)
-    count = 0
-    for _, row in df.iterrows():
-        tid = int(row["id"])
-        if db.query(Movie).filter(Movie.tmdb_id == tid).first():
-            continue
-        db.add(Movie(
-            tmdb_id=tid,
-            title=row.get("title", ""),
-            overview=row.get("overview", "") or "",
-            genres=str(row.get("genres", "")),
-            cast=str(row.get("cast", "")),
-            release_year=str(row.get("release_year", "")),
-            vote_average=float(row.get("vote_average", 0) or 0),
-            poster_path="",
-            content_type=str(row.get("content_type", "movie")),
-        ))
-        count += 1
-    db.commit()
-    return count
-
-
 def auto_setup():
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
@@ -107,7 +81,6 @@ def auto_setup():
                 return
 
         t = load_tmdb(db)
-        e = load_extra(db)
-        print(f"Done! {t} movies + {e} extra items loaded")
+        print(f"Done! {t} movies loaded")
     finally:
         db.close()
