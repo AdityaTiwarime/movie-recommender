@@ -1,6 +1,23 @@
 version: "3.9"
 
 services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: movie-recommender-db
+    environment:
+      - POSTGRES_USER=movieuser
+      - POSTGRES_PASSWORD=moviepass
+      - POSTGRES_DB=moviedb
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U movieuser -d moviedb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - recommender-network
+
   backend:
     build: ./backend
     container_name: movie-recommender-backend
@@ -9,8 +26,11 @@ services:
     env_file:
       - path: ./backend/.env
         required: false
-    volumes:
-      - movie_data:/app/data
+    environment:
+      - DATABASE_URL=postgresql://movieuser:moviepass@postgres:5432/moviedb
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks:
       - recommender-network
 
@@ -26,12 +46,12 @@ services:
     networks:
       - recommender-network
 
-# Explicit custom Docker network connecting frontend and backend containers,
-# as required by the project specification (rather than relying on the
+# Explicit custom Docker network connecting all three containers, as
+# required by the project specification (rather than relying on the
 # implicit default network Compose would otherwise create).
 networks:
   recommender-network:
     driver: bridge
 
 volumes:
-  movie_data:
+  postgres_data:
