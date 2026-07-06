@@ -5,6 +5,10 @@ import pandas as pd
 from app.database import SessionLocal, Base, engine
 from app.models import Movie
 
+# these two only get used as a fallback - the actual dataset now ships
+# committed inside the repo at backend/data/, which Docker copies into
+# the image at build time. these urls just cover the edge case where
+# someone deletes the csvs locally before building.
 MOVIES_URL = "https://raw.githubusercontent.com/vamshi121/TMDB-5000-Movie-Dataset/main/tmdb_5000_movies.csv"
 CREDITS_URL = "https://raw.githubusercontent.com/andandandand/CSV-datasets/master/tmdb_5000_credits.csv"
 
@@ -73,6 +77,8 @@ def auto_setup():
 
         print("First run — setting up database...")
 
+        # dataset ships committed inside the repo now, so this only
+        # kicks in if someone deletes the csvs locally for some reason
         if not os.path.exists(MOVIES_CSV):
             if not grab_file(MOVIES_URL, MOVIES_CSV):
                 return

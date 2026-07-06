@@ -1,8 +1,6 @@
 __pycache__/
 *.pyc
-.env
 backend/app/data/*.db
-backend/app/data/*.csv
 node_modules/
 dist/
 build/
