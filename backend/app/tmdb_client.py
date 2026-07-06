@@ -9,6 +9,7 @@ free key at https://www.themoviedb.org/settings/api.
 
 import os
 import requests
+from concurrent.futures import ThreadPoolExecutor
 from sqlalchemy.orm import Session
 from app.models import Movie
 
@@ -93,17 +94,25 @@ def fetch_poster_path(tmdb_id: int) -> str:
 
 
 def fill_posters(movies, db):
-    """Backfills poster_path on the way out of an endpoint, only for rows
-    that don't have one yet. Lazy on purpose - fetching all 4800 posters up
-    front on first boot would take forever and burn API quota on movies
-    nobody ends up looking at."""
+    """Backfills poster_path for whichever rows don't have one yet, before
+    an endpoint returns them. Runs the TMDB lookups in parallel instead of
+    one-by-one - with ~20 movies per request, doing this sequentially meant
+    waiting on 20 separate network round trips back to back, which is what
+    made results feel slow to load. Doesn't fetch anything for movies that
+    already have a cached poster from a previous request."""
+    todo = [m for m in movies if not m.poster_path]
+    if not todo:
+        return movies
+
+    with ThreadPoolExecutor(max_workers=10) as pool:
+        fetched = pool.map(lambda m: fetch_poster_path(m.tmdb_id), todo)
+
     touched = False
-    for m in movies:
-        if not m.poster_path:
-            p = fetch_poster_path(m.tmdb_id)
-            if p:
-                m.poster_path = p
-                touched = True
+    for movie, poster in zip(todo, fetched):
+        if poster:
+            movie.poster_path = poster
+            touched = True
+
     if touched:
         db.commit()
     return movies
