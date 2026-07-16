@@ -172,6 +172,9 @@ Every result card shows the poster, genres, cast (where available), rating,
 and a "Like — show me more like this" button that nudges future picks toward
 that movie's genres.
 
+📸 **[Screenshot Walkthrough (PDF)](docs/Screenshots.pdf)** — a visual tour
+of the quiz flow, results, filters, favorites, and detail view.
+
 ## API reference
 
 Interactive docs are available at **http://localhost:8000/docs** (FastAPI's
@@ -254,7 +257,8 @@ movie-recommender/
 └── docs/
     ├── INSTALL.md
     ├── USAGE.md
-    └── TECHNICAL.md
+    ├── TECHNICAL.md
+    └── Screenshots.pdf         # visual walkthrough of the app
 ```
 
 ## Implementation process
@@ -284,6 +288,10 @@ movie-recommender/
   Movies Dataset", merged as described above; poster images from the TMDB
   API. No third-party templates, pretrained models, or other candidates' code
   or modules were used.
+- LLM assistance was used during development (Claude and ChatGPT). Approximate
+  AI-assistance breakdown: **Frontend ~67%, Backend ~40%, Docker ~8%.**
+- This project was built and tested on Windows only. I did not have access to
+  a Mac to verify cross-platform behavior, so macOS compatibility is untested.
 - This README and the accompanying docs reflect the actual design decisions
   made while building this project, and I can walk through and justify any
   part of the implementation in review.
